@@ -23,4 +23,10 @@ public class NotificationScheduler {
             pending.forEach(processor::process);
         }
     }
+
+    @Scheduled(fixedDelay = 5000)
+    @SchedulerLock(name = "notification-retry", lockAtMostFor = "PT10S", lockAtLeastFor = "PT5S")
+    public void retryFailed() {
+        pollingHelper.requeueFailed();
+    }
 }
