@@ -5,6 +5,8 @@ import com.minsun.notification.common.IdempotencyKeyGenerator;
 import com.minsun.notification.common.exception.NotificationNotFoundException;
 import com.minsun.notification.domain.Notification;
 import com.minsun.notification.infrastructure.NotificationRepository;
+import com.minsun.notification.infrastructure.event.NotificationCreatedEvent;
+import com.minsun.notification.infrastructure.event.NotificationEventPublisher;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -19,7 +21,9 @@ public class NotificationService {
     private final NotificationRepository repository;
     private final NotificationWriter writer;
     private final IdempotencyKeyGenerator keyGenerator;
+    private final NotificationEventPublisher eventPublisher;
 
+    @Transactional
     public NotificationCreateResponse register(NotificationCreateRequest request) {
         String key = keyGenerator.generate(
                 request.recipientId(),
@@ -41,6 +45,7 @@ public class NotificationService {
 
         try {
             Notification saved = writer.save(notification);
+            eventPublisher.publish(new NotificationCreatedEvent(saved.getId()));
             return NotificationCreateResponse.ofNew(saved);
         } catch (DataIntegrityViolationException e) {
             // 동시 요청 등으로 unique 충돌 → 기존 건 반환
