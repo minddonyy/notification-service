@@ -1,5 +1,6 @@
 package com.minsun.notification.domain;
 
+import com.minsun.notification.common.RetryPolicyCalculator;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -114,8 +115,7 @@ public class Notification {
             this.status = NotificationStatus.DEAD_LETTER;
         } else {
             this.status = NotificationStatus.FAILED;
-            // Exponential Backoff: delay(분) = retryCount²
-            this.nextRetryAt = LocalDateTime.now().plusMinutes((long) retryCount * retryCount);
+            this.nextRetryAt = RetryPolicyCalculator.nextRetryAt(this.retryCount);
         }
     }
 
