@@ -1,6 +1,5 @@
 package com.minsun.notification.domain;
 
-import com.minsun.notification.common.RetryPolicyCalculator;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -138,6 +137,12 @@ public class Notification {
             this.readAt = LocalDateTime.now();
             this.updatedAt = LocalDateTime.now();
         }
+    }
+
+    public void markDeadLetterDirectly(String reason) {
+        this.failureReason = reason;
+        this.status = NotificationStatus.DEAD_LETTER;
+        this.updatedAt = LocalDateTime.now();
     }
 
     public void recoverStuck() {

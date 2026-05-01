@@ -15,6 +15,7 @@ import org.springframework.transaction.event.TransactionalEventListener;
 public class NotificationEventListener {
 
     private final NotificationProcessor processor;
+    private final NotificationStatusUpdater statusUpdater;
     private final NotificationRepository repository;
 
     // AFTER_COMMIT: 등록 트랜잭션 커밋 이후 실행 → DB에 레코드가 존재함을 보장
@@ -22,7 +23,9 @@ public class NotificationEventListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handle(NotificationCreatedEvent event) {
         log.info("NotificationCreatedEvent received: notificationId={}", event.notificationId());
-        repository.findById(event.notificationId())
-                .ifPresent(processor::process);
+        repository.findById(event.notificationId()).ifPresent(notification -> {
+            statusUpdater.markProcessing(notification);
+            processor.process(notification);
+        });
     }
 }

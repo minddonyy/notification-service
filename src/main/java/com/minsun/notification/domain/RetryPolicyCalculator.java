@@ -1,4 +1,4 @@
-package com.minsun.notification.common;
+package com.minsun.notification.domain;
 
 import java.time.LocalDateTime;
 

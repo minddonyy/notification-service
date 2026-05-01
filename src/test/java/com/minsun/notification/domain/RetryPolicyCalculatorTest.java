@@ -1,4 +1,4 @@
-package com.minsun.notification.common;
+package com.minsun.notification.domain;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

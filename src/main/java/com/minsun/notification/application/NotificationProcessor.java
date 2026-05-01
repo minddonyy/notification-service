@@ -2,12 +2,10 @@ package com.minsun.notification.application;
 
 import com.minsun.notification.common.exception.UnsupportedChannelException;
 import com.minsun.notification.domain.Notification;
-import com.minsun.notification.infrastructure.NotificationRepository;
 import com.minsun.notification.infrastructure.sender.NotificationSender;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -17,27 +15,27 @@ import java.util.List;
 public class NotificationProcessor {
 
     private final List<NotificationSender> senders;
-    private final NotificationRepository repository;
+    private final NotificationStatusUpdater statusUpdater;
 
-    @Transactional
     public void process(Notification notification) {
-        notification.markProcessing();
-        repository.save(notification);
-
+        NotificationSender sender;
         try {
-            NotificationSender sender = senders.stream()
+            sender = senders.stream()
                     .filter(s -> s.supports(notification.getChannel()))
                     .findFirst()
                     .orElseThrow(() -> new UnsupportedChannelException(notification.getChannel()));
-
-            sender.send(notification);
-            notification.markSent();
-
-        } catch (Exception e) {
-            log.error("Failed to send notification id={}, reason={}", notification.getId(), e.getMessage());
-            notification.markFailed(e.getMessage());
+        } catch (UnsupportedChannelException e) {
+            log.error("Unsupported channel for notification id={}, channel={}", notification.getId(), notification.getChannel());
+            statusUpdater.markDeadLetter(notification, e.getMessage());
+            return;
         }
 
-        repository.save(notification);
+        try {
+            sender.send(notification);
+            statusUpdater.markSent(notification);
+        } catch (Exception e) {
+            log.error("Failed to send notification id={}, reason={}", notification.getId(), e.getMessage());
+            statusUpdater.markFailed(notification, e.getMessage());
+        }
     }
 }
