@@ -48,7 +48,7 @@ docker exec -i notification-postgres psql -U notification -d notification \
 
 ### 4. API 확인
 
-- Swagger UI: http://localhost:8080/swagger-ui.html
+- Swagger UI: http://localhost:8080/swagger-ui/index.html
 - OpenAPI JSON: http://localhost:8080/v3/api-docs
 
 ---
